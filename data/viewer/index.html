@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fashion Cluster Viewer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #111; color: #eee; display: flex; height: 100vh; overflow: hidden; }
+
+  #sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: #1a1a1a;
+    padding: 16px;
+    overflow-y: auto;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #sidebar h2 { font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+
+  .cluster-btn {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: left;
+    width: 100%;
+    color: white;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .cluster-btn:hover, .cluster-btn.active { opacity: 1; border: 2px solid white; }
+
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  #scatter-container {
+    height: 45%;
+    position: relative;
+    border-bottom: 1px solid #333;
+    overflow: hidden;
+    cursor: grab;
+  }
+  #scatter-container:active { cursor: grabbing; }
+
+  canvas { position: absolute; top: 0; left: 0; }
+
+  #grid-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+
+  #grid-title { font-size: 13px; color: #aaa; margin-bottom: 12px; }
+
+  #grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .thumb {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border 0.15s, transform 0.15s;
+  }
+  .thumb:hover { transform: scale(1.05); border-color: white; }
+
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #lightbox.show { display: flex; }
+  #lightbox img { max-height: 80vh; max-width: 80vw; border-radius: 8px; }
+  #lightbox-label { color: #eee; font-size: 13px; }
+  #lightbox-close {
+    position: absolute;
+    top: 20px; right: 28px;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+  }
+
+  #tooltip {
+    display: none;
+    position: fixed;
+    z-index: 50;
+    pointer-events: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  #tooltip img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+  }
+  #tooltip-label {
+    font-size: 11px;
+    color: #eee;
+    background: rgba(0,0,0,0.7);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h2>Clusters</h2>
+  <button class="cluster-btn active" data-cluster="all" style="background:#444">All</button>
+</div>
+
+<div id="main">
+  <div id="scatter-container">
+    <canvas id="scatter"></canvas>
+  </div>
+  <div id="grid-container">
+    <div id="grid-title">Click a cluster to filter</div>
+    <div id="grid"></div>
+  </div>
+</div>
+
+<div id="tooltip">
+  <img id="tooltip-img" src="" />
+  <div id="tooltip-label"></div>
+</div>
+
+<div id="lightbox">
+  <span id="lightbox-close">&times;</span>
+  <img id="lightbox-img" src="" />
+  <div id="lightbox-label"></div>
+</div>
+
+<script>
+const points = [{"filename": "1.jpg", "cluster": "cluster_2", "x": -0.9099918007850647, "y": 1.2647778987884521}, {"filename": "10.jpg", "cluster": "cluster_2", "x": -1.5764877796173096, "y": 2.031815767288208}, {"filename": "100.jpg", "cluster": "cluster_0", "x": -4.733865261077881, "y": 2.7939889430999756}, {"filename": "101.jpg", "cluster": "cluster_0", "x": -4.713433742523193, "y": 3.250932455062866}, {"filename": "102.jpg", "cluster": "cluster_0", "x": -4.009978771209717, "y": 2.620697498321533}, {"filename": "103.jpg", "cluster": "cluster_0", "x": -4.751109600067139, "y": 2.7114362716674805}, {"filename": "104.jpg", "cluster": "cluster_0", "x": -3.6100172996520996, "y": 3.44559645652771}, {"filename": "105.jpg", "cluster": "cluster_0", "x": -4.494187831878662, "y": 3.8528079986572266}, {"filename": "106.jpg", "cluster": "cluster_0", "x": -3.241793155670166, "y": 3.402020215988159}, {"filename": "107.jpg", "cluster": "cluster_0", "x": -4.557622909545898, "y": 3.337193727493286}, {"filename": "108.jpg", "cluster": "cluster_0", "x": -3.931694746017456, "y": 2.322580099105835}, {"filename": "109.jpg", "cluster": "cluster_0", "x": -4.700654029846191, "y": 3.8288607597351074}, {"filename": "11.jpg", "cluster": "cluster_2", "x": -1.0384942293167114, "y": 1.4564357995986938}, {"filename": "110.jpg", "cluster": "cluster_0", "x": -4.312214374542236, "y": 3.873316764831543}, {"filename": "111.jpg", "cluster": "cluster_0", "x": -4.819335460662842, "y": 3.4241209030151367}, {"filename": "112.jpg", "cluster": "cluster_2", "x": -1.6501737833023071, "y": 3.3188388347625732}, {"filename": "113.jpg", "cluster": "cluster_0", "x": -4.145107269287109, "y": 3.9656453132629395}, {"filename": "114.jpg", "cluster": "cluster_0", "x": -4.575406074523926, "y": 4.271681308746338}, {"filename": "115.jpg", "cluster": "cluster_0", "x": -4.19249963760376, "y": 2.765143394470215}, {"filename": "116.jpg", "cluster": "cluster_0", "x": -4.139542102813721, "y": 3.448647975921631}, {"filename": "117.jpg", "cluster": "cluster_0", "x": -4.999187469482422, "y": 3.379102945327759}, {"filename": "118.jpg", "cluster": "cluster_0", "x": -3.4499473571777344, "y": 2.61255145072937}, {"filename": "119.jpg", "cluster": "cluster_0", "x": -3.107459545135498, "y": 2.328644275665283}, {"filename": "12.jpg", "cluster": "cluster_2", "x": -1.1224889755249023, "y": 2.766180992126465}, {"filename": "120.jpg", "cluster": "cluster_0", "x": -4.525768280029297, "y": 2.8242263793945312}, {"filename": "121.jpg", "cluster": "cluster_0", "x": -4.468679904937744, "y": 3.108522653579712}, {"filename": "13.jpg", "cluster": "cluster_2", "x": -1.126312017440796, "y": 0.9856727719306946}, {"filename": "14.jpg", "cluster": "cluster_2", "x": -0.8210235238075256, "y": 1.4878172874450684}, {"filename": "15.jpg", "cluster": "cluster_2", "x": -1.1113263368606567, "y": 0.6291365027427673}, {"filename": "16.jpg", "cluster": "cluster_2", "x": -1.5987240076065063, "y": 1.2242012023925781}, {"filename": "17.jpg", "cluster": "cluster_2", "x": -0.8867940902709961, "y": 2.3166887760162354}, {"filename": "18.jpg", "cluster": "cluster_2", "x": -0.9189634323120117, "y": 2.8000411987304688}, {"filename": "19.jpg", "cluster": "cluster_2", "x": -0.8580766916275024, "y": 0.9515413045883179}, {"filename": "2.jpg", "cluster": "cluster_2", "x": -1.6832658052444458, "y": 1.7169585227966309}, {"filename": "20.jpg", "cluster": "cluster_2", "x": -1.4406929016113281, "y": 0.793981671333313}, {"filename": "3.jpg", "cluster": "cluster_2", "x": -0.6703436970710754, "y": 0.8828704953193665}, {"filename": "35.jpg", "cluster": "cluster_2", "x": -1.0902578830718994, "y": 2.406423807144165}, {"filename": "36.jpg", "cluster": "cluster_2", "x": -1.996079921722412, "y": 0.9965800046920776}, {"filename": "37.jpg", "cluster": "cluster_2", "x": -1.6117117404937744, "y": 0.8124995231628418}, {"filename": "38.jpg", "cluster": "cluster_2", "x": -0.4119413495063782, "y": 1.2308260202407837}, {"filename": "39.jpg", "cluster": "cluster_2", "x": -1.276773452758789, "y": 1.7163844108581543}, {"filename": "40.jpg", "cluster": "cluster_2", "x": -1.9036481380462646, "y": 1.505079984664917}, {"filename": "41.jpg", "cluster": "cluster_2", "x": -1.3937097787857056, "y": 3.113802433013916}, {"filename": "42.jpg", "cluster": "cluster_1", "x": -1.0523765087127686, "y": 3.76440167427063}, {"filename": "43.jpg", "cluster": "cluster_1", "x": -1.9909077882766724, "y": 4.112400531768799}, {"filename": "44.jpg", "cluster": "cluster_1", "x": -1.8981401920318604, "y": 3.7616021633148193}, {"filename": "45.jpg", "cluster": "cluster_1", "x": -1.332821011543274, "y": 4.182836055755615}, {"filename": "46.jpg", "cluster": "cluster_1", "x": -1.585841417312622, "y": 4.090426445007324}, {"filename": "47.jpg", "cluster": "cluster_1", "x": -1.9245915412902832, "y": 4.402313232421875}, {"filename": "48.jpg", "cluster": "cluster_1", "x": -0.9707456827163696, "y": 3.4237136840820312}, {"filename": "49.jpg", "cluster": "cluster_1", "x": -2.4282031059265137, "y": 3.7740726470947266}, {"filename": "50.jpg", "cluster": "cluster_2", "x": -0.9751625657081604, "y": 3.161180257797241}, {"filename": "51.jpg", "cluster": "cluster_1", "x": -2.285785675048828, "y": 4.2841057777404785}, {"filename": "52.jpg", "cluster": "cluster_1", "x": -1.7389799356460571, "y": 4.171109199523926}, {"filename": "53.jpg", "cluster": "cluster_1", "x": -1.5696901082992554, "y": 3.6874303817749023}, {"filename": "54.jpg", "cluster": "cluster_1", "x": -1.5623773336410522, "y": 4.446521759033203}, {"filename": "55.jpg", "cluster": "cluster_2", "x": -2.138606548309326, "y": 1.108022928237915}, {"filename": "56.jpg", "cluster": "cluster_1", "x": -0.950253963470459, "y": 3.8095712661743164}, {"filename": "57.jpg", "cluster": "cluster_1", "x": -2.0956034660339355, "y": 4.4712605476379395}, {"filename": "58.jpg", "cluster": "noise", "x": -2.4676601886749268, "y": 3.130586624145508}, {"filename": "59.jpg", "cluster": "cluster_1", "x": -2.2187976837158203, "y": 4.242488861083984}, {"filename": "60.jpg", "cluster": "cluster_1", "x": -1.4148242473602295, "y": 4.340538501739502}, {"filename": "61.jpg", "cluster": "cluster_2", "x": -0.7450782656669617, "y": 2.977159261703491}, {"filename": "62.jpg", "cluster": "cluster_2", "x": 0.223361998796463, "y": 3.0312840938568115}, {"filename": "63.jpg", "cluster": "cluster_2", "x": -0.2632709741592407, "y": 2.2464475631713867}, {"filename": "64.jpg", "cluster": "cluster_2", "x": 0.07850507646799088, "y": 2.0895144939422607}, {"filename": "65.jpg", "cluster": "cluster_2", "x": 0.7058700323104858, "y": 2.3875346183776855}, {"filename": "66.jpg", "cluster": "cluster_2", "x": 0.08367025852203369, "y": 1.989374041557312}, {"filename": "67.jpg", "cluster": "cluster_2", "x": -0.5407575368881226, "y": 1.6567529439926147}, {"filename": "68.jpg", "cluster": "cluster_2", "x": 0.3851015865802765, "y": 2.6385514736175537}, {"filename": "69.jpg", "cluster": "cluster_2", "x": -2.1726274490356445, "y": 1.9754704236984253}, {"filename": "70.jpg", "cluster": "cluster_2", "x": -0.22756506502628326, "y": 1.8570656776428223}, {"filename": "71.jpg", "cluster": "cluster_2", "x": -1.6931922435760498, "y": 2.706645965576172}, {"filename": "72.jpg", "cluster": "cluster_2", "x": -0.025461696088314056, "y": 1.7468260526657104}, {"filename": "73.jpg", "cluster": "cluster_2", "x": -0.6004260778427124, "y": 2.2130279541015625}, {"filename": "74.jpg", "cluster": "cluster_2", "x": 0.49387797713279724, "y": 2.121490001678467}, {"filename": "75.jpg", "cluster": "cluster_2", "x": -0.4874421954154968, "y": 3.1905009746551514}, {"filename": "76.jpg", "cluster": "cluster_2", "x": 0.0448632687330246, "y": 2.648264169692993}, {"filename": "77.jpg", "cluster": "noise", "x": -0.8411800861358643, "y": 1.960922122001648}, {"filename": "78.jpg", "cluster": "cluster_2", "x": -2.4230141639709473, "y": 1.5185729265213013}, {"filename": "79.jpg", "cluster": "cluster_2", "x": -0.6347178220748901, "y": 3.433729410171509}, {"filename": "80.jpg", "cluster": "cluster_2", "x": 0.2214006781578064, "y": 3.3041107654571533}, {"filename": "81.jpg", "cluster": "cluster_2", "x": -1.2404166460037231, "y": 1.8799355030059814}, {"filename": "82.jpg", "cluster": "cluster_2", "x": -1.9242916107177734, "y": 0.9727193713188171}, {"filename": "83.jpg", "cluster": "cluster_2", "x": 0.6283374428749084, "y": 2.546034812927246}, {"filename": "84.jpg", "cluster": "cluster_2", "x": -0.20383118093013763, "y": 2.953859329223633}, {"filename": "85.jpg", "cluster": "cluster_2", "x": -0.3548451066017151, "y": 1.9599778652191162}, {"filename": "86.jpg", "cluster": "cluster_2", "x": 0.39198657870292664, "y": 3.0779061317443848}, {"filename": "87.jpg", "cluster": "cluster_2", "x": -1.8595269918441772, "y": 2.087930202484131}, {"filename": "88.jpg", "cluster": "cluster_2", "x": -0.1506628692150116, "y": 3.1131787300109863}, {"filename": "89.jpg", "cluster": "cluster_2", "x": -0.012998978607356548, "y": 2.901550531387329}, {"filename": "90.jpg", "cluster": "cluster_0", "x": -4.343343734741211, "y": 4.351827144622803}, {"filename": "91.jpg", "cluster": "cluster_0", "x": -4.442742347717285, "y": 2.3763647079467773}, {"filename": "92.jpg", "cluster": "cluster_0", "x": -3.885319471359253, "y": 3.2402966022491455}, {"filename": "93.jpg", "cluster": "noise", "x": -2.886146068572998, "y": 3.3259661197662354}, {"filename": "94.jpg", "cluster": "cluster_0", "x": -5.071631908416748, "y": 3.7908315658569336}, {"filename": "95.jpg", "cluster": "cluster_0", "x": -4.080444812774658, "y": 3.4002761840820312}, {"filename": "96.jpg", "cluster": "cluster_0", "x": -4.2382378578186035, "y": 2.1258132457733154}, {"filename": "97.jpg", "cluster": "cluster_0", "x": -3.97611927986145, "y": 3.578519582748413}, {"filename": "98.jpg", "cluster": "cluster_0", "x": -3.5185892581939697, "y": 2.1212613582611084}, {"filename": "99.jpg", "cluster": "cluster_0", "x": -5.112306594848633, "y": 2.9922845363616943}];
+
+const clusterNames = [...new Set(points.map(p => p.cluster))].sort();
+const palette = [
+  "#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6",
+  "#1abc9c","#e67e22","#e91e63","#00bcd4","#8bc34a",
+  "#ff5722","#607d8b","#673ab7","#009688","#ffc107"
+];
+const colorMap = {};
+clusterNames.forEach((c, i) => {
+  colorMap[c] = c === "noise" ? "#555" : palette[i % palette.length];
+});
+
+// sidebar buttons
+const sidebar = document.getElementById("sidebar");
+clusterNames.forEach(c => {
+  const btn = document.createElement("button");
+  btn.className = "cluster-btn";
+  btn.dataset.cluster = c;
+  btn.style.background = colorMap[c];
+  const count = points.filter(p => p.cluster === c).length;
+  btn.textContent = `${c} (${count})`;
+  sidebar.appendChild(btn);
+});
+
+// state
+let activeCluster = "all";
+let scale = 1, offsetX = 0, offsetY = 0;
+let dragging = false, lastX, lastY;
+
+// scatter
+const canvas = document.getElementById("scatter");
+const ctx = canvas.getContext("2d");
+const tooltip = document.getElementById("tooltip");
+const tooltipImg = document.getElementById("tooltip-img");
+const tooltipLabel = document.getElementById("tooltip-label");
+
+function resizeCanvas() {
+  const container = document.getElementById("scatter-container");
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  drawScatter();
+}
+
+function getTransformedPoints() {
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const pad = 40;
+  const w = canvas.width - pad * 2;
+  const h = canvas.height - pad * 2;
+  return points.map(p => ({
+    ...p,
+    cx: pad + ((p.x - minX) / (maxX - minX)) * w,
+    cy: pad + ((p.y - minY) / (maxY - minY)) * h,
+  }));
+}
+
+let transformedPoints = [];
+
+function drawScatter() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  transformedPoints = getTransformedPoints();
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(scale, scale);
+  transformedPoints.forEach(p => {
+    const active = activeCluster === "all" || p.cluster === activeCluster;
+    ctx.beginPath();
+    ctx.arc(p.cx, p.cy, active ? 6 : 3, 0, Math.PI * 2);
+    ctx.fillStyle = active ? colorMap[p.cluster] : "#333";
+    ctx.globalAlpha = active ? 0.9 : 0.3;
+    ctx.fill();
+  });
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+// find closest point to mouse on canvas
+function getPointAt(mouseX, mouseY) {
+  const hitRadius = 12;
+  let closest = null;
+  let closestDist = Infinity;
+  transformedPoints.forEach(p => {
+    const screenX = p.cx * scale + offsetX;
+    const screenY = p.cy * scale + offsetY;
+    const dist = Math.hypot(mouseX - screenX, mouseY - screenY);
+    if (dist < hitRadius && dist < closestDist) {
+      closest = p;
+      closestDist = dist;
+    }
+  });
+  return closest;
+}
+
+// hover — show tooltip
+canvas.addEventListener("mousemove", e => {
+  if (dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const p = getPointAt(mx, my);
+  if (p) {
+    canvas.style.cursor = "pointer";
+    tooltipImg.src = `images/${p.filename}`;
+    tooltipLabel.textContent = `${p.filename} — ${p.cluster}`;
+    tooltip.style.display = "flex";
+    // position tooltip above cursor
+    const tx = e.clientX - 70;
+    const ty = e.clientY - 170;
+    tooltip.style.left = tx + "px";
+    tooltip.style.top = Math.max(8, ty) + "px";
+  } else {
+    canvas.style.cursor = dragging ? "grabbing" : "grab";
+    tooltip.style.display = "none";
+  }
+});
+
+canvas.addEventListener("mouseleave", () => {
+  tooltip.style.display = "none";
+});
+
+// click on scatter point — open lightbox
+canvas.addEventListener("click", e => {
+  if (dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const p = getPointAt(mx, my);
+  if (p) openLightbox(p);
+});
+
+// grid
+function renderGrid(cluster) {
+  const grid = document.getElementById("grid");
+  const title = document.getElementById("grid-title");
+  grid.innerHTML = "";
+  const filtered = cluster === "all" ? points : points.filter(p => p.cluster === cluster);
+  title.textContent = `${cluster === "all" ? "All clusters" : cluster} — ${filtered.length} images`;
+  filtered.forEach(p => {
+    const img = document.createElement("img");
+    img.className = "thumb";
+    img.src = `images/${p.filename}`;
+    img.title = `${p.filename} — ${p.cluster}`;
+    img.style.borderColor = colorMap[p.cluster];
+    img.addEventListener("click", () => openLightbox(p));
+    grid.appendChild(img);
+  });
+}
+
+// lightbox
+function openLightbox(p) {
+  document.getElementById("lightbox-img").src = `images/${p.filename}`;
+  document.getElementById("lightbox-label").textContent = `${p.filename} — ${p.cluster}`;
+  document.getElementById("lightbox").classList.add("show");
+  tooltip.style.display = "none";
+}
+document.getElementById("lightbox-close").addEventListener("click", () => {
+  document.getElementById("lightbox").classList.remove("show");
+});
+document.getElementById("lightbox").addEventListener("click", e => {
+  if (e.target === document.getElementById("lightbox")) {
+    document.getElementById("lightbox").classList.remove("show");
+  }
+});
+
+// cluster filter
+document.querySelectorAll(".cluster-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".cluster-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeCluster = btn.dataset.cluster;
+    drawScatter();
+    renderGrid(activeCluster);
+  });
+});
+
+// pan + zoom
+const container = document.getElementById("scatter-container");
+container.addEventListener("mousedown", e => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+window.addEventListener("mouseup", () => { dragging = false; });
+window.addEventListener("mousemove", e => {
+  if (!dragging) return;
+  offsetX += e.clientX - lastX;
+  offsetY += e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  drawScatter();
+});
+container.addEventListener("wheel", e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  scale *= delta;
+  drawScatter();
+}, { passive: false });
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+renderGrid("all");
+</script>
+</body>
+</html>

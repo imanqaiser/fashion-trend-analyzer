@@ -1,0 +1,60 @@
+============================================================
+  CLUSTER SENTIMENT & POPULARITY REPORT
+  Generated: 2025-09-30  |  Recency window: 180 days
+============================================================
+
+#1  CLUSTER_0  NEW TREND
+   Popularity score : 100.0/100
+   Images           : 30
+   Total likes      : 262,729  (avg 8757.6)
+   Total comments   : 150
+   Avg sentiment    : +0.109  (POSITIVE)
+   Sentiment dist   : +50 pos  ~75 neu  -25 neg
+   Recency ratio    : 100.0% of likes in last 180d
+   Monthly like CV  : 0.12  (lower = more consistent)
+   Top images:
+      • 114.jpg  11,957 likes  (2025-06-18)
+      • 103.jpg  11,534 likes  (2025-06-25)
+      • 96.jpg  11,365 likes  (2025-07-29)
+
+#2  CLUSTER_2  EVERGREEN
+   Popularity score : 44.2/100
+   Images           : 52
+   Total likes      : 280,292  (avg 5390.2)
+   Total comments   : 260
+   Avg sentiment    : +0.113  (POSITIVE)
+   Sentiment dist   : +96 pos  ~124 neu  -40 neg
+   Recency ratio    : 24.7% of likes in last 180d
+   Monthly like CV  : 0.59  (lower = more consistent)
+   Top images:
+      • 72.jpg  9,945 likes  (2022-07-22)
+      • 63.jpg  9,873 likes  (2022-08-11)
+      • 112.jpg  9,497 likes  (2025-08-25)
+
+#3  CLUSTER_1  EVERGREEN
+   Popularity score : 22.5/100
+   Images           : 16
+   Total likes      : 83,414  (avg 5213.4)
+   Total comments   : 80
+   Avg sentiment    : +0.081  (POSITIVE)
+   Sentiment dist   : +23 pos  ~49 neu  -8 neg
+   Recency ratio    : 38.8% of likes in last 180d
+   Monthly like CV  : 0.44  (lower = more consistent)
+   Top images:
+      • 53.jpg  6,880 likes  (2024-04-01)
+      • 44.jpg  6,715 likes  (2025-08-11)
+      • 52.jpg  6,556 likes  (2026-06-19)
+
+#4  OUTLIERS  NEW TREND
+   Popularity score : 0.0/100
+   Images           : 3
+   Total likes      : 21,371  (avg 7123.7)
+   Total comments   : 15
+   Avg sentiment    : +0.083  (POSITIVE)
+   Sentiment dist   : +5 pos  ~7 neu  -3 neg
+   Recency ratio    : 54.7% of likes in last 180d
+   Monthly like CV  : 0.35  (lower = more consistent)
+   Top images:
+      • 77.jpg  9,673 likes  (2023-09-10)
+      • 93.jpg  7,983 likes  (2025-07-11)
+      • 58.jpg  3,715 likes  (2025-11-15)

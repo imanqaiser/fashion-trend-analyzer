@@ -23,7 +23,7 @@ print("Loading data...")
 with open(DATA_PATH) as f:
     data = json.load(f)
 
-vectors = np.array(data["umap_15d"], dtype=np.float32)
+vectors = np.array(data["pca_50d"], dtype=np.float32)
 clusters = data["cluster"]
 paths = data["paths"]
 

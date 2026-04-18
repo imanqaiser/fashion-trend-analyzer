@@ -21,11 +21,11 @@ with open(DATA_PATH) as f:
 
 clusters = data["cluster"]
 paths = data["paths"]
-umap_2d = data["umap_2d"]
+pca_2d = data["pca_2d"]
 
 # copy images into viewer folder and build data
 points = []
-for fname, cluster, (x, y) in zip(paths, clusters, umap_2d):
+for fname, cluster, (x, y) in zip(paths, clusters, pca_2d):
     src = os.path.join(IMG_DIR, fname)
     if not os.path.exists(src):
         continue

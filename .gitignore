@@ -1,7 +1,0 @@
-venv/
-old_scripts/
-__pycache__/
-*.pyc
-*.pth
-.env
-.DS_Store

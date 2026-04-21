@@ -201,9 +201,9 @@ const points = {json.dumps(points)};
 
 const clusterNames = [...new Set(points.map(p => p.cluster))].sort();
 const palette = [
-  "#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6",
-  "#1abc9c","#e67e22","#e91e63","#00bcd4","#8bc34a",
-  "#ff5722","#607d8b","#673ab7","#009688","#ffc107"
+"#e74c3c","#3498db","#2ecc71","#f1c40f","#9b59b6",
+  "#1abc9c","#e91e63","#00bcd4","#8bc34a","#ff5722",
+  "#607d8b","#673ab7","#009688","#cddc39","#795548"
 ];
 const colorMap = {{}};
 clusterNames.forEach((c, i) => {{

@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 # -----------------------
 # CONFIG
 # -----------------------
-VECTORS_PATH = "../data/clip_color_feature_vectors.json"
-OUTPUT_PATH = "../data/pca_vectors.json"
+VECTORS_PATH = "../data/dino_feature_vectors.json"
+OUTPUT_PATH = "../data/pca_dinovectors.json"
 
 
 # -----------------------

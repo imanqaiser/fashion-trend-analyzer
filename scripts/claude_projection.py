@@ -21,11 +21,11 @@ with open(DATA_PATH) as f:
 
 clusters = data["cluster"]
 paths = data["paths"]
-umap_2d = data["umap_2d"]
+pca_2d = data["pca_2d"]
 
 # copy images into viewer folder and build data
 points = []
-for fname, cluster, (x, y) in zip(paths, clusters, umap_2d):
+for fname, cluster, (x, y) in zip(paths, clusters, pca_2d):
     src = os.path.join(IMG_DIR, fname)
     if not os.path.exists(src):
         continue
@@ -201,11 +201,6 @@ const points = {json.dumps(points)};
 
 const clusterNames = [...new Set(points.map(p => p.cluster))].sort();
 const palette = [
-<<<<<<< Updated upstream
-  "#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6",
-  "#1abc9c","#e67e22","#e91e63","#00bcd4","#8bc34a",
-  "#ff5722","#607d8b","#673ab7","#009688","#ffc107"
-=======
   "#e74c3c", // red
   "#3498db", // blue
   "#f1c40f", // yellow
@@ -213,7 +208,6 @@ const palette = [
   "#e91e63", // pink
   "#795548", // brown
   "#8bc34a"  // green
->>>>>>> Stashed changes
 ];
 const colorMap = {{}};
 clusterNames.forEach((c, i) => {{
